@@ -1,0 +1,54 @@
+name: hospital-resource-allocation
+description: >
+  A reinforcement learning environment where an agent allocates limited
+  hospital resources (ICU beds, doctors, ventilators) to incoming patients
+  based on severity and urgency.
+
+version: 1.0
+
+entry_point: env:HospitalEnv
+
+observation_space:
+  type: dict
+  properties:
+    icu_beds:
+      type: integer
+    doctors:
+      type: integer
+    ventilators:
+      type: integer
+    patients:
+      type: list
+
+action_space:
+  type: list
+  description: >
+    List of actions assigning resources to patients.
+    Each action is (patient_id, resource_type)
+  values:
+    - icu
+    - doctor
+    - ventilator
+    - wait
+
+reward:
+  description: >
+    Reward is based on patient severity, treatment success,
+    waiting penalties, and resource efficiency.
+
+episodes:
+  max_steps: 10
+
+tags:
+  - reinforcement-learning
+  - healthcare
+  - resource-allocation
+  - simulation
+
+tasks:
+  - name: easy
+    description: Low patient load, minimal resource pressure
+  - name: medium
+    description: Mixed severity patients
+  - name: hard
+    description: Emergency scenario with critical overload
