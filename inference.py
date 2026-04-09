@@ -1,5 +1,5 @@
 import os
-from openai import OpenAI
+
 from rl_agent import QLearningAgent
 from env import HospitalEnv
 
@@ -8,11 +8,7 @@ API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4.1-mini")
 HF_TOKEN = os.getenv("HF_TOKEN", "test")  # default for local
 
-# ✅ OpenAI client (required)
-client = OpenAI(
-    base_url=API_BASE_URL,
-    api_key=HF_TOKEN
-)
+
 
 
 # 🔁 RL TRAINING
