@@ -1,0 +1,15 @@
+[project]
+name = "hospital-rl-env"
+version = "0.1.0"
+description = "Hospital Resource Allocation OpenEnv Environment"
+authors = [{ name = "Augustine" }]
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "openai"
+]
+
+[tool.openenv]
+env_name = "hospital"
+entry_point = "app:app"
