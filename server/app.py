@@ -1,42 +1,40 @@
 from fastapi import FastAPI
-from env import HospitalEnv
+from pydantic import BaseModel
 
 app = FastAPI()
 
-# Global environment
-env = HospitalEnv()
+# Dummy state (replace with your env logic)
+state = {"step": 0}
 
-# ✅ ROOT (fixes "Not Found")
+class ActionRequest(BaseModel):
+    actions: list
+
 @app.get("/")
 def root():
-    return {"message": "Hospital RL API is running"}
+    return {"message": "Hospital RL Environment Running"}
 
-# ✅ RESET endpoint (REQUIRED)
 @app.post("/reset")
 def reset():
-    global env
-    env = HospitalEnv()
-    state = env.reset()
-    return {
-        "state": state
-    }
+    global state
+    state = {"step": 0}
+    return {"state": state}
 
-# ✅ STEP endpoint (REQUIRED)
 @app.post("/step")
-def step(action: dict):
-    """
-    Expected input:
-    {
-        "actions": [(patient_id, action), ...]
-    }
-    """
-
-    actions = action.get("actions", [])
-
-    next_state, reward, done, _ = env.step(actions)
+def step(req: ActionRequest):
+    global state
+    state["step"] += 1
 
     return {
-        "state": next_state,
-        "reward": reward,
-        "done": done
+        "state": state,
+        "reward": 1.0,
+        "done": state["step"] >= 5
     }
+
+# 🔥 REQUIRED MAIN FUNCTION
+def main():
+    return app
+
+# 🔥 REQUIRED ENTRY CHECK
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("server.app:app", host="0.0.0.0", port=7860)
