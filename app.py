@@ -1,62 +1,40 @@
-import gradio as gr
-from rl_agent import QLearningAgent
+# app.py
+
+from fastapi import FastAPI
+from pydantic import BaseModel
 from env import HospitalEnv
 
+app = FastAPI()
+
+# Global environment
 env = HospitalEnv()
-agent = QLearningAgent()
 
-def train():
-    episodes = 100
-    logs = []
 
-    for ep in range(episodes):
-        state = env.reset()
-        total_reward = 0
-        done = False
+# Request format for /step
+class ActionRequest(BaseModel):
+    action: list
 
-        while not done:
-            actions = []
 
-            for p in state["patients"]:
-                action = agent.choose_action(state, p)
-                actions.append((p["id"], action))
+# RESET endpoint
+@app.post("/reset")
+def reset(task: str = "easy"):
+    state = env.reset(task)
+    return {"state": state}
 
-            next_state, reward, done, results = env.step(actions)
 
-            for ((pid, action), (patient, status)) in zip(actions, results):
-                if status == "treated":
-                    if patient["severity"] == "critical":
-                        r = 40
-                    elif patient["severity"] == "medium":
-                        r = 20
-                    else:
-                        r = 10
-                else:
-                    if patient["severity"] == "critical":
-                        r = -30
-                    elif patient["severity"] == "medium":
-                        r = -15
-                    else:
-                        r = -5
+# STEP endpoint
+@app.post("/step")
+def step(req: ActionRequest):
+    state, reward, done, info = env.step(req.action)
+    return {
+        "state": state,
+        "reward": float(reward),
+        "done": bool(done),
+        "info": info
+    }
 
-                agent.update(state, patient, action, r, next_state)
 
-            state = next_state
-            total_reward += reward
-
-        # ✅ decay exploration
-        agent.decay_epsilon()
-
-        logs.append(f"Episode {ep}: {total_reward}")
-
-    return "\n".join(logs)
-
-ui = gr.Interface(
-    fn=train,
-    inputs=[],
-    outputs="text",
-    title="🏥 Hospital RL Training"
-)
-
-if __name__ == "__main__":
-    ui.launch()
+# STATE endpoint
+@app.get("/state")
+def state():
+    return {"state": env.state()}

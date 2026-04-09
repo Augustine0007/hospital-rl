@@ -4,10 +4,8 @@ WORKDIR /app
 
 COPY . /app
 
-# Install ONLY required dependency
-RUN pip install --no-cache-dir openai
+RUN pip install --no-cache-dir -r requirements.txt
 
-ENV API_BASE_URL=https://api.openai.com/v1
-ENV MODEL_NAME=gpt-4.1-mini
+EXPOSE 7860
 
-CMD ["python", "inference.py"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "7860"]
