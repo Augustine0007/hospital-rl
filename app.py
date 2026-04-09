@@ -1,7 +1,4 @@
-# app.py
-
 from fastapi import FastAPI
-from pydantic import BaseModel
 from env import HospitalEnv
 
 app = FastAPI()
@@ -9,32 +6,37 @@ app = FastAPI()
 # Global environment
 env = HospitalEnv()
 
+# ✅ ROOT (fixes "Not Found")
+@app.get("/")
+def root():
+    return {"message": "Hospital RL API is running"}
 
-# Request format for /step
-class ActionRequest(BaseModel):
-    action: list
-
-
-# RESET endpoint
+# ✅ RESET endpoint (REQUIRED)
 @app.post("/reset")
-def reset(task: str = "easy"):
-    state = env.reset(task)
-    return {"state": state}
-
-
-# STEP endpoint
-@app.post("/step")
-def step(req: ActionRequest):
-    state, reward, done, info = env.step(req.action)
+def reset():
+    global env
+    env = HospitalEnv()
+    state = env.reset()
     return {
-        "state": state,
-        "reward": float(reward),
-        "done": bool(done),
-        "info": info
+        "state": state
     }
 
+# ✅ STEP endpoint (REQUIRED)
+@app.post("/step")
+def step(action: dict):
+    """
+    Expected input:
+    {
+        "actions": [(patient_id, action), ...]
+    }
+    """
 
-# STATE endpoint
-@app.get("/state")
-def state():
-    return {"state": env.state()}
+    actions = action.get("actions", [])
+
+    next_state, reward, done, _ = env.step(actions)
+
+    return {
+        "state": next_state,
+        "reward": reward,
+        "done": done
+    }
