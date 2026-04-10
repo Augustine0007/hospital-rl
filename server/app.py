@@ -3,12 +3,12 @@ from pydantic import BaseModel
 from env import HospitalEnv
 
 app = FastAPI()
-
 env = HospitalEnv()
 
 
-class ResetRequest(BaseModel):
-    task: str
+# ✅ ONLY for /step (needs body)
+class ActionRequest(BaseModel):
+    actions: list
 
 
 @app.get("/")
@@ -16,15 +16,17 @@ def home():
     return {"message": "Hospital RL API running"}
 
 
+# 🔥 IMPORTANT: NO BODY HERE
 @app.post("/reset")
-def reset(req: ResetRequest):
+def reset():
     state = env.reset()
-    return {"state": state}
+    return state
 
 
+# ✅ STEP uses body
 @app.post("/step")
-def step(actions: list):
-    state, reward, done, info = env.step(actions)
+def step(req: ActionRequest):
+    state, reward, done, info = env.step(req.actions)
     return {
         "state": state,
         "reward": reward,
@@ -33,7 +35,7 @@ def step(actions: list):
     }
 
 
-# ✅ REQUIRED for OpenEnv validator
+# ✅ REQUIRED ENTRYPOINT
 def main():
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=7860)
