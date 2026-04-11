@@ -2,13 +2,13 @@ import os
 from env import HospitalEnv
 
 
-# ✅ LLM CALL (MANDATORY FOR PHASE 2)
+# ✅ LLM CALL (REQUIRED FOR PHASE 2)
 def call_llm():
     try:
         base_url = os.environ.get("API_BASE_URL")
         api_key = os.environ.get("API_KEY")
 
-        # Local run → skip safely
+        # Skip only in local runs
         if not base_url or not api_key:
             print("[LLM] Missing env (local run) — skipping")
             return
@@ -34,6 +34,24 @@ def call_llm():
         print("[LLM ERROR]", e)
 
 
+# ✅ CONVERT SEVERITY SAFELY
+def parse_severity(severity):
+    if isinstance(severity, str):
+        severity = severity.lower()
+        if severity == "critical":
+            return 9
+        elif severity == "medium":
+            return 5
+        elif severity == "low":
+            return 2
+        else:
+            return 0
+    try:
+        return int(severity)
+    except:
+        return 0
+
+
 # ✅ RUN SINGLE TASK
 def run_task(task_name):
     print(f"[START] task={task_name} env=hospital model=gpt-4.1-mini")
@@ -46,11 +64,10 @@ def run_task(task_name):
 
     while not done and step_count < 6:
         patients = state.get("patients", [])
-
         actions = []
 
         for p in patients:
-            severity = int(p.get("severity", 0))  # ✅ FIX TYPE ERROR
+            severity = parse_severity(p.get("severity", 0))
 
             if severity > 7:
                 actions.append((p["id"], "icu"))
@@ -62,7 +79,6 @@ def run_task(task_name):
         state, reward, done, info = env.step(actions)
 
         step_count += 1
-
         print(f"[STEP] step={step_count} action={actions} reward={reward:.2f} done={done} error=null")
 
     print(f"[END] success=true steps={step_count}")
@@ -74,7 +90,7 @@ def run_all_tasks():
         run_task(task)
 
 
-# ✅ ENTRYPOINT (CRITICAL)
+# ✅ ENTRY POINT
 if __name__ == "__main__":
-    call_llm()        # 🔥 REQUIRED FOR PHASE 2
+    call_llm()      # 🔥 REQUIRED
     run_all_tasks()
